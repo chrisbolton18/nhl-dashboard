@@ -2,7 +2,7 @@
 
 API built using NHL's API (https://statsapi.web.nhl.com/api/v1/)
 
-# key differences
+# Key differences
 
 - Player lookup by name instead of ID
 
