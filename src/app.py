@@ -1,11 +1,9 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 import requests
+import json
+from markupsafe import escape_silent
 
 app = Flask(__name__)
-
-@app.route('/')
-def home():
-    return '[]'
 
 @app.route('/teams/<string:teamName>/stats')
 def getTeamStats(teamName=None):
@@ -25,7 +23,33 @@ def getTeamStats(teamName=None):
     return jsonify(stats)
 
 @app.route('/players/<string:playerName>/stats')
-def getPlayerStats():
+def getPlayerStats(playerName=None):
+    playerID = getPlayerIDByName(playerName)
+
+    isCurrentSeason = escape_silent(request.args.get('current'))
+    if len(isCurrentSeason) == 0 or isCurrentSeason != 'True':
+        isCurrentSeason = False
+    else:
+        isCurrentSeason = True
+
+    if playerID == None:
+        return "No player found"
+
+    if isCurrentSeason:
+        data = requests.get(f'https://statsapi.web.nhl.com/api/v1/people/{playerID}/stats?stats=statsSingleSeason&season=20232024')
+    else:
+        data = requests.get(f'https://statsapi.web.nhl.com/api/v1/people/{playerID}/stats?stats=yearByYear')
+
+    if data.status_code != 200:
+        return '[]'
+    else:
+        data = data.json()
+
+
+    return jsonify(data['stats'])
+
+@app.route('/players/<string:playerName>/accolades')
+def getPlayerAccolades(playerName=None):
     return
 
 def getTeamIDByName(team_name):
@@ -46,7 +70,17 @@ def getTeamIDByName(team_name):
     return "can't find team"
 
 def getPlayerIDByName(player_name):
-    
+    file_playerIDs = open('playerIDs.json', 'r')
+    playerIDs = json.load(file_playerIDs)
+
+    retval = ''
+
+    try:
+        retval = playerIDs[player_name]
+    except:
+        retval = None
+
+    return retval
 
 if __name__ == '__main__':
     app.run()
