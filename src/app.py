@@ -48,7 +48,6 @@ def frontpage_player_headshot(player_name=None):
     response = requests.get(headshot_endpoint, stream=True)
 
     b64img = base64.b64encode(response.content)
-
     return b64img
 
 
